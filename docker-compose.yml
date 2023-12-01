@@ -1,0 +1,31 @@
+version: '3'
+
+networks:
+  accounting:
+
+services:
+  mysql:
+    image: mysql:8.0.34
+    platform: linux/arm64
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: accounting
+      MYSQL_USER: accounting
+      MYSQL_PASSWORD: accounting
+    ports:
+      - 127.0.0.1:3306:3306
+    networks:
+      - accounting
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    ports:
+      - 127.0.0.1:8080:80
+    environment:
+      PMA_HOST: mysql
+      PMA_PORT: 3306
+      MYSQL_ROOT_PASSWORD: root
+    networks:
+      - accounting
+    depends_on:
+      - mysql
