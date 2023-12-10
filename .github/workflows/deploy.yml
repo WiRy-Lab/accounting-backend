@@ -1,0 +1,31 @@
+name: Deploy to server
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: self-hosted
+    steps:
+      - uses: actions/checkout@v2
+      - name: Deploy to server
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USERNAME }}
+          password: ${{ secrets.PASSWORD }}
+          port: ${{ secrets.PORT }}
+          script: |
+            cd ~
+            if [ ! -d "accounting-backend" ]; then
+              git clone ${{ secrets.REPO }}
+            fi
+            cd accounting-backend
+            git pull
+            if [ ! -f ".env" ]; then
+              cp .env.example .env
+            fi
+            docker-compose up -d --build
+```
