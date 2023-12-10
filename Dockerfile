@@ -9,6 +9,5 @@ COPY . .
 
 RUN poetry install
 
-EXPOSE 80
+EXPOSE 8000
 
-ENTRYPOINT ["poetry", "run", "python", "manage.py", "runserver", "0.0.0.0:80"]

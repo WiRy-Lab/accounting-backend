@@ -12,6 +12,7 @@ services:
       MYSQL_DATABASE: accounting
       MYSQL_USER: accounting
       MYSQL_PASSWORD: accounting
+    command: --default-authentication-plugin=mysql_native_password
     ports:
       - 127.0.0.1:3306:3306
     networks:
@@ -29,3 +30,22 @@ services:
       - accounting
     depends_on:
       - mysql
+
+  accounting:
+    build:
+      context: .
+    ports:
+      - "127.0.0.1:8000:8000"
+    volumes:
+      - .:/app
+    command: >
+      sh -c "poetry run python manage.py wait_for_db && \
+             poetry run python manage.py migrate && \
+             poetry run python manage.py runserver 0.0.0.0:8000"
+    env_file:
+      - .env
+    networks:
+      - accounting
+    depends_on:
+      - mysql
+

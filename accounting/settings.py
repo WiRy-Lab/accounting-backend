@@ -43,7 +43,8 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'drf_yasg',  # 配置drf-yasg (API文件生成工具)
-    'user'
+    'user',
+    'core',
 ]
 
 MIDDLEWARE = [
@@ -86,7 +87,7 @@ DATABASES = {
     #     'NAME': BASE_DIR / 'db.sqlite3',
     # }
     'default': {
-        'ENGINE': env('DB_ENGINE'),
+        'ENGINE': 'django.db.backends.mysql',
         'NAME': env('DB_NAME'),
         'USER': env('DB_USER'),
         'HOST': env('DB_HOST'),
@@ -94,7 +95,6 @@ DATABASES = {
         'PASSWORD': env('DB_PASSWORD'),
     }
 }
-
 
 # Password validation
 # https://docs.djangoproject.com/en/4.2/ref/settings/#auth-password-validators
