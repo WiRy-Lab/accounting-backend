@@ -25,7 +25,7 @@ class ModelTests(TestCase):
     def test_new_user_without_account_raises_error(self):
         """Test that creating user without account raises error"""
         with self.assertRaises(ValueError):
-            get_user_model().objects.create_user('', 'test123')
+            get_user_model().objects.create_user('', 'test123',)
 
     def test_create_superuser(self):
         """Test creating a new superuser"""

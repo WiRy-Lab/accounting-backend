@@ -19,14 +19,20 @@ class UserManager(BaseUserManager):
 
         return user
 
-    def create_superuser(self, account, password):
+    def create_superuser(self, account, password=None, **extra_fields):
         """Create, save and return a new superuser"""
-        user = self.create_user(account, password)
-        user.is_superuser = True
-        user.is_staff = True
-        user.save(using=self._db)
+        if not account:
+            raise ValueError('SuperUser must have an account')
 
-        return user
+        extra_fields.setdefault('is_superuser', True)
+        extra_fields.setdefault('is_staff', True)
+
+        if extra_fields.get('is_staff') is not True:
+            raise ValueError('Superuser must have is_staff=True.')
+        if extra_fields.get('is_superuser') is not True:
+            raise ValueError('Superuser must have is_superuser=True.')
+
+        return self.create_user(account, password, **extra_fields)
 
 class User(AbstractBaseUser, PermissionsMixin):
     """User in the system"""

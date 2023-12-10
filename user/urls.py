@@ -1,8 +1,14 @@
+"""
+URL mapping for user API
+"""
 from django.urls import path
 
-from .views import ListUser, CreateUser
+from user import views
+
+app_name = "auth"
 
 urlpatterns = [
-    path("", CreateUser.as_view()),
-    path("<int:user_id>", ListUser.as_view()),
+    path("register/", views.CreateUserView.as_view(), name="register"),
+    path("login/", views.CreateTokenView.as_view(), name="login"),
+    path("me/", views.ManageUserView.as_view(), name="me"),
 ]

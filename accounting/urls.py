@@ -34,9 +34,6 @@ schema_view = get_schema_view(
 )
 
 
-api = [
-    path('user/', include('user.urls')),
-]
 
 urlpatterns = [
     # Admin
@@ -52,5 +49,5 @@ urlpatterns = [
 
 
     # API
-    path('api/', include(api)),
+    path('api/auth/', include('user.urls')),
 ]
