@@ -6,14 +6,13 @@ networks:
 services:
   mysql:
     image: mysql:8.0.34
-    platform: linux/arm64
     environment:
       MYSQL_ROOT_PASSWORD: root
       MYSQL_DATABASE: accounting
       MYSQL_USER: accounting
       MYSQL_PASSWORD: accounting
     volumes:
-      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+      - ./mysql:/docker-entrypoint-initdb.d/
     command: --default-authentication-plugin=mysql_native_password
     ports:
       - 127.0.0.1:3306:3306
