@@ -25,6 +25,6 @@ jobs:
             fi
             cd accounting-backend
             git pull
-            echo ${{ vars.ENV }} > .env
+            echo "${{ vars.ENV }}" > .env
             docker compose up -d --build
             echo "Deployed to server!"
