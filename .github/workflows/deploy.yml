@@ -18,6 +18,7 @@ jobs:
           password: ${{ secrets.PASSWORD }}
           port: ${{ secrets.PORT }}
           script: |
+            echo "Deploying to server..."
             cd ~
             if [ ! -d "accounting-backend" ]; then
               git clone ${{ secrets.REPO }}
@@ -28,3 +29,4 @@ jobs:
               cp .env.example .env
             fi
             docker-compose up -d --build
+            echo "Deployed to server!"
