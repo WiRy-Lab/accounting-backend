@@ -23,6 +23,7 @@ class UserManager(BaseUserManager):
         """Create, save and return a new superuser"""
         user = self.create_user(account, password)
         user.is_superuser = True
+        user.is_staff = True
         user.save(using=self._db)
 
         return user
@@ -33,6 +34,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     account = models.CharField(max_length=255, unique=True)
     email = models.EmailField(max_length=255)
     is_active = models.BooleanField(default=True)
+    is_staff = models.BooleanField(default=False)
 
     objects = UserManager()
 
