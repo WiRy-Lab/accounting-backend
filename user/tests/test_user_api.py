@@ -182,3 +182,30 @@ class PrivateUserApiTests(TestCase):
         self.assertEqual(self.user.name, payload['name'])
         self.assertTrue(self.user.check_password(payload['password']))
         self.assertEqual(res.status_code, status.HTTP_200_OK)
+
+    def test_login_creates_new_token(self):
+        """Test that logging in creates a new token"""
+        user_details = {
+            'account': 'testaccount1',
+            'password': 'testpass123',
+            'email': 'apitest@example.com',
+            'name': 'ApiTest',
+        }
+        create_user(**user_details)
+
+        payload = {
+            'account': user_details['account'],
+            'password': user_details['password'],
+        }
+        res = self.client.post(TOKEN_URL, payload)
+        first_token = res.data['token']
+
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.assertIn('token', res.data)
+
+        res = self.client.post(TOKEN_URL, payload)
+        second_token = res.data['token']
+
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.assertIn('token', res.data)
+        self.assertNotEqual(first_token, second_token)
