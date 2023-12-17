@@ -2,6 +2,7 @@
 Database models
 """
 from typing import Any
+from django.conf import settings
 from django.db import models
 from django.contrib.auth.models import (AbstractBaseUser, BaseUserManager, PermissionsMixin)
 
@@ -34,6 +35,7 @@ class UserManager(BaseUserManager):
 
         return self.create_user(account, password, **extra_fields)
 
+
 class User(AbstractBaseUser, PermissionsMixin):
     """User in the system"""
     name = models.CharField(max_length=255)
@@ -46,3 +48,21 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     USERNAME_FIELD = 'account'
 
+
+class Accounting(models.Model):
+    """Accounting object"""
+    TYPE_CHOICES = (
+        ('income', 'income'),
+        ('outcome', 'outcome'),
+    )
+
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+    )
+    date = models.DateField()
+    type = models.CharField(max_length=255, choices=TYPE_CHOICES)
+    amount = models.IntegerField()
+
+    def __str__(self) -> str:
+        return str(self.user) + ' ' + self.type + ' ' + str(self.amount)

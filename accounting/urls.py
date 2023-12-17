@@ -50,4 +50,5 @@ urlpatterns = [
 
     # API
     path('api/auth/', include('user.urls')),
+    path('api/accounting/', include('account.urls')),
 ]

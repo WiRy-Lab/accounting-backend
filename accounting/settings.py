@@ -47,6 +47,7 @@ INSTALLED_APPS = [
     'drf_yasg',  # 配置drf-yasg (API文件生成工具)
     'user',
     'core',
+    'account',
 ]
 
 MIDDLEWARE = [
