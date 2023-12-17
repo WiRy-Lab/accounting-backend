@@ -6,12 +6,13 @@ authors = ["Ryan Lee <lee98064@gmail.com>"]
 readme = "README.md"
 
 [tool.poetry.dependencies]
-python = "^3.11"
+python = "^3.10"
 django = "^4.2.7"
 django-environ = "^0.11.2"
 mysqlclient = "^2.2.0"
 python-dotenv = "^1.0.0"
 drf-yasg = "^1.21.7"
+django-sslserver = "^0.22"
 
 
 [build-system]
