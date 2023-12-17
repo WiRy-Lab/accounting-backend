@@ -10,7 +10,7 @@ from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APIClient
 
-from core.models import Accounting
+from core.models import Accounting, Category
 
 from account.serializers import AccountingSerializer, AccountingDetailSerializer
 
@@ -69,7 +69,7 @@ class PrivateAccountingApiTests(TestCase):
         accounting = Accounting.objects.all().order_by('-date')
         serializer = AccountingSerializer(accounting, many=True)
         self.assertEqual(res.status_code, status.HTTP_200_OK)
-        self.assertEqual(res.data, serializer.data)
+        self.assertEqual(res.data['data'], serializer.data)
 
     def test_accounting_limit_to_user(self):
         """Test that accounting returned are for the authenticated user"""
@@ -85,7 +85,7 @@ class PrivateAccountingApiTests(TestCase):
         accounting = Accounting.objects.filter(user=self.user)
         serializer = AccountingSerializer(accounting, many=True)
         self.assertEqual(res.status_code, status.HTTP_200_OK)
-        self.assertEqual(res.data, serializer.data)
+        self.assertEqual(res.data['data'], serializer.data)
 
     def test_get_accounting_detail(self):
         """Test get a accounting detail"""
@@ -135,7 +135,7 @@ class PrivateAccountingApiTests(TestCase):
         serializer = AccountingSerializer(accounting_within_range, many=True)
 
         self.assertEqual(res.status_code, status.HTTP_200_OK)
-        self.assertEqual(res.data, serializer.data)
+        self.assertEqual(res.data['data'], serializer.data)
 
     def test_retrieve_current_month_accounting(self):
         """Test retrieving current month's accounting records"""
@@ -164,7 +164,7 @@ class PrivateAccountingApiTests(TestCase):
 
 
         self.assertEqual(res.status_code, status.HTTP_200_OK)
-        self.assertEqual(res.data, serializer.data)
+        self.assertEqual(res.data['data'], serializer.data)
 
     def test_partial_update_accounting(self):
         """Test updating a accounting with patch"""
@@ -255,3 +255,97 @@ class PrivateAccountingApiTests(TestCase):
 
         self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertFalse(Accounting.objects.filter(type=payload['type']).exists())
+
+    def test_creat_accounting_with_new_categroy(self):
+        """Test creating a new accounting with new category"""
+        payload = {
+            'date': datetime.now().strftime("%Y-%m-%d"),
+            'type': 'income',
+            'amount': 1000,
+            'category': [{'name': 'Food'}, {'name': 'Transportation'}],
+        }
+        res = self.client.post(ACCOUNTING_URL, payload, format='json')
+
+        self.assertEqual(res.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(len(res.data['category']), 2)
+        self.assertTrue(Category.objects.filter(name='Food').exists())
+        self.assertTrue(Category.objects.filter(name='Transportation').exists())
+
+    def test_creat_accounting_with_existing_categroy(self):
+        category = Category.objects.create(user=self.user, name='Food')
+        payload = {
+            'date': datetime.now().strftime("%Y-%m-%d"),
+            'type': 'income',
+            'amount': 1000,
+            'category': [{'name': 'Food'}, {'name': 'Transportation'}],
+        }
+        res = self.client.post(ACCOUNTING_URL, payload, format='json')
+
+        self.assertEqual(res.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(len(res.data['category']), 2)
+        self.assertTrue(Category.objects.filter(name='Transportation').exists())
+        self.assertEqual(res.data['category'][0]['id'], category.id)
+
+    def test_create_category_on_update(self):
+        """Test creating a new category on updating an accounting"""
+        accounting = create_accounting(user=self.user)
+
+        payload = {'category': [{'name': 'Food'}, {'name': 'Transportation'}]}
+        url = detail_url(accounting.id)
+        res = self.client.patch(url, payload, format='json')
+
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        new_category = Category.objects.filter(name='Food' or 'Transportation')
+        self.assertIn(new_category[0].name, ['Food', 'Transportation'])
+        self.assertEqual(len(res.data['category']), 2)
+        self.assertEqual(res.data['category'][0]['id'], new_category[0].id)
+
+    def test_update_accounting_assign_category(self):
+        """Test updating an accounting with existing category"""
+        category_food = Category.objects.create(user=self.user, name='Food')
+        accounting = create_accounting(user=self.user)
+        accounting.category.add(category_food)
+
+        category_transportation = Category.objects.create(user=self.user, name='Transportation')
+        payload = {'category': [{'name': 'Transportation'}]}
+        url = detail_url(accounting.id)
+        res = self.client.patch(url, payload, format='json')
+
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.assertIn(category_transportation, accounting.category.all())
+        self.assertNotIn(category_food, accounting.category.all())
+
+    def test_clear_recipe_category(self):
+        """"Test clearing category of an accounting"""
+        category_food = Category.objects.create(user=self.user, name='Food')
+        accounting = create_accounting(user=self.user)
+        accounting.category.add(category_food)
+
+        payload = {'category': []}
+        url = detail_url(accounting.id)
+        res = self.client.patch(url, payload, format='json')
+
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.assertEqual(accounting.category.count(), 0)
+
+    def test_filter_accounting_by_category(self):
+        """Test filtering accounting by category"""
+        a1 = create_accounting(user=self.user)
+        a2 = create_accounting(user=self.user)
+        category_food = Category.objects.create(user=self.user, name='Food')
+        category_transportation = Category.objects.create(user=self.user, name='Transportation')
+        a1.category.add(category_food)
+        a2.category.add(category_transportation)
+        a3 = create_accounting(user=self.user)
+
+        params = {'category': f'{category_food.id},{category_transportation.id}'}
+        res = self.client.get(ACCOUNTING_URL, params)
+
+        s1 = AccountingSerializer(a1)
+        s2 = AccountingSerializer(a2)
+        s3 = AccountingSerializer(a3)
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(res.data['data']), 2)
+        self.assertIn(s1.data, res.data['data'])
+        self.assertIn(s2.data, res.data['data'])
+        self.assertNotIn(s3.data, res.data['data'])

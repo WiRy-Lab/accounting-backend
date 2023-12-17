@@ -6,6 +6,12 @@ from django.contrib.auth import get_user_model
 
 from core import models
 
+
+def create_user(account='testaccount', password='testpass123'):
+    """Helper function to create a user"""
+    return get_user_model().objects.create_user(account, password)
+
+
 class ModelTests(TestCase):
     """Test for models"""
 
@@ -53,3 +59,14 @@ class ModelTests(TestCase):
         )
 
         self.assertEqual(accounting.user, user)
+
+    def test_create_category(self):
+        """Test creating a new category is successful"""
+        user = create_user()
+        category = models.Category.objects.create(
+            user=user,
+            name='category1',
+        )
+
+        self.assertEqual(category.user, user)
+        self.assertEqual(str(category), category.name)

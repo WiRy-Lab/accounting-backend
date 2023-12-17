@@ -9,7 +9,8 @@ from account import views
 
 
 router = DefaultRouter()
-router.register('', views.AccountingViewSet, basename='accounting')
+router.register('accounting', views.AccountingViewSet, basename='accounting')
+router.register('category', views.CategoryViewSet, basename='category')
 
 app_name = 'accounting'
 

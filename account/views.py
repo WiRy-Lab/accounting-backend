@@ -1,16 +1,19 @@
 """
 Views for accounting api
 """
+from drf_yasg.utils import swagger_auto_schema
+from drf_yasg import openapi
+
 from datetime import datetime , timedelta
 
 from django.utils.timezone import make_aware
 
-from rest_framework import viewsets
+from rest_framework import viewsets, mixins
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
-from core.models import Accounting
+from core.models import Accounting, Category
 from account import serializers
 
 from drf_yasg.utils import swagger_auto_schema
@@ -24,9 +27,19 @@ class AccountingViewSet(viewsets.ModelViewSet):
     authentication_classes = (TokenAuthentication,)
     permission_classes = (IsAuthenticated,)
 
+    def _params_to_ints(self, qs):
+        """Convert a list of string IDs to a list of integers"""
+        return [int(str_id) for str_id in qs.split(',')]
+
     def get_queryset(self):
         """Retrieve the accounting for the authenticated user"""
-        return self.queryset.filter(user=self.request.user).order_by('-date')
+        categories = self.request.query_params.get('category')
+        queryset = self.queryset
+        if categories:
+            category_ids = self._params_to_ints(categories)
+            queryset = queryset.filter(category__id__in=category_ids)
+
+        return queryset.filter(user=self.request.user).order_by('-date')
 
     def get_serializer_class(self):
         """Return the serializer class for the request"""
@@ -41,7 +54,9 @@ class AccountingViewSet(viewsets.ModelViewSet):
 
     @swagger_auto_schema(
         operation_description="Get accounting records within a date range \
-            (default: current month) ex: /api/accounting/?from=2021-01-01&end=2021-01-31",
+                               (default: current month) ex: /api/accounting/?from=2021-01-01&end=2021-01-31\n \
+                               Get accounting records within comma separated list of categoryIDs \
+                               (default: all categories) ex: /api/accounting/?category=2,3",
         manual_parameters=[
             openapi.Parameter(
                 name='from',
@@ -55,6 +70,13 @@ class AccountingViewSet(viewsets.ModelViewSet):
                 in_=openapi.IN_QUERY,
                 type=openapi.TYPE_STRING,
                 description='End date',
+                required=False,
+            ),
+            openapi.Parameter(
+                name='category',
+                in_=openapi.IN_QUERY,
+                type=openapi.TYPE_STRING,
+                description='Category ID',
                 required=False,
             ),
         ],
@@ -93,3 +115,49 @@ class AccountingViewSet(viewsets.ModelViewSet):
             'data': serializer.data
         }
         return Response(response_data)
+
+
+class CategoryViewSet(mixins.CreateModelMixin,
+                      mixins.DestroyModelMixin,
+                      mixins.UpdateModelMixin,
+                      mixins.ListModelMixin,
+                      viewsets.GenericViewSet):
+    """View for managing category APIs"""
+    serializer_class = serializers.CategorySerializer
+    queryset = Category.objects.all()
+    authentication_classes = (TokenAuthentication,)
+    permission_classes = (IsAuthenticated,)
+
+    @swagger_auto_schema(
+        operation_description="Get categories assigned to accounting \
+                               (default: all categories) ex: /api/category/?assigned_only=1\n \
+                               Get categories not assigned to accounting \
+                               (default: all categories) ex: /api/category/?assigned_only=2",
+        manual_parameters=[
+            openapi.Parameter(
+                name='assigned_only',
+                in_=openapi.IN_QUERY,
+                type=openapi.TYPE_INTEGER,
+                description='1: assigned to accounting, 2: not assigned to accounting',
+                required=False,
+            ),
+        ],
+    )
+    def list(self, request, *args, **kwargs):
+        """List categories"""
+        return super(CategoryViewSet, self).list(request, *args, **kwargs)
+
+    def get_queryset(self):
+        """Retrieve the category for the authenticated user"""
+        assigned_only = int(self.request.query_params.get('assigned_only', 0))
+        queryset = self.queryset
+        if assigned_only == 1:
+            queryset = queryset.filter(accounting__isnull=False)
+        elif assigned_only == 2:
+            queryset = queryset.filter(accounting__isnull=True)
+
+        return queryset.filter(user=self.request.user).order_by('-name').distinct()
+
+    def perform_create(self, serializer):
+        """Create a new category"""
+        serializer.save(user=self.request.user)

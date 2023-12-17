@@ -63,6 +63,19 @@ class Accounting(models.Model):
     date = models.DateField()
     type = models.CharField(max_length=255, choices=TYPE_CHOICES)
     amount = models.IntegerField()
+    category = models.ManyToManyField('Category')
 
     def __str__(self) -> str:
         return str(self.user) + ' ' + self.type + ' ' + str(self.amount)
+
+
+class Category(models.Model):
+    """Category for accounting"""
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+    )
+    name = models.CharField(max_length=255)
+
+    def __str__(self) -> str:
+        return self.name
