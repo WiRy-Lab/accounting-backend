@@ -166,6 +166,3 @@ SWAGGER_SETTINGS = {
         }
     }
 }
-
-# 禁止自動在URL後面加上斜線
-APPEND_SLASH = False

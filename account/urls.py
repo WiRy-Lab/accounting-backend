@@ -8,7 +8,7 @@ from rest_framework.routers import DefaultRouter
 from account import views
 
 
-router = DefaultRouter()
+router = DefaultRouter(trailing_slash=False)
 router.register('accounting', views.AccountingViewSet, basename='accounting')
 router.register('category', views.CategoryViewSet, basename='category')
 
