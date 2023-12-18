@@ -21,7 +21,7 @@ class AccountingSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Accounting
-        fields = ('id', 'date', 'type', 'amount', 'category')
+        fields = ('id', 'date', 'type', 'amount', 'category', 'title')
         read_only_fields = ('id',)
 
     def _get_or_create_category(self, categories, instance):
@@ -58,7 +58,7 @@ class AccountingDetailSerializer(AccountingSerializer):
     """Serialize a accounting detail"""
 
     class Meta(AccountingSerializer.Meta):
-        fields = AccountingSerializer.Meta.fields
+        fields = AccountingSerializer.Meta.fields + ('description',)
         read_only_fields = ('id',)
 
 

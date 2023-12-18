@@ -64,9 +64,11 @@ class Accounting(models.Model):
     type = models.CharField(max_length=255, choices=TYPE_CHOICES)
     amount = models.IntegerField()
     category = models.ManyToManyField('Category')
+    title = models.CharField(max_length=255, blank=True)
+    description = models.TextField(blank=True)
 
     def __str__(self) -> str:
-        return str(self.user) + ' ' + self.type + ' ' + str(self.amount)
+        return self.title
 
 
 class Category(models.Model):

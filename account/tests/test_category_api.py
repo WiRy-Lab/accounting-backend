@@ -74,6 +74,7 @@ class PrivateCategoryApiTests(TestCase):
         self.assertEqual(res.data[0]['name'], category.name)
         self.assertEqual(res.data[0]['id'], category.id)
 
+
     def test_update_category(self):
         """Test updating a category with patch"""
         category = Category.objects.create(user=self.user, name='Food')

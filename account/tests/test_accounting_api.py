@@ -29,6 +29,8 @@ def create_accounting(user, **params):
         'date': datetime.now().strftime("%Y-%m-%d"),
         'type': 'income',
         'amount': 1000,
+        'title': 'test title',
+        'description': 'test description',
     }
     default.update(params)
 
@@ -103,6 +105,8 @@ class PrivateAccountingApiTests(TestCase):
             'date': datetime.now().strftime("%Y-%m-%d"),
             'type': 'income',
             'amount': 1000,
+            'title': 'test title',
+            'description': 'test description',
         }
         res = self.client.post(ACCOUNTING_URL, payload)
 

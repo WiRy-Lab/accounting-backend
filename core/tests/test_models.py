@@ -56,9 +56,12 @@ class ModelTests(TestCase):
             date='2020-01-01',
             type='income',
             amount=1000,
+            title = 'test',
+            description = 'test',
         )
 
         self.assertEqual(accounting.user, user)
+        self.assertEqual(str(accounting), accounting.title)
 
     def test_create_category(self):
         """Test creating a new category is successful"""
