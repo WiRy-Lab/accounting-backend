@@ -7,6 +7,8 @@ from django.utils.translation import gettext as _
 
 from rest_framework import serializers
 
+from core.models import Category
+
 class UserSerializer(serializers.ModelSerializer):
     """Serializer for the user object"""
     password_verify = serializers.CharField(write_only=True, min_length=5)
@@ -27,7 +29,17 @@ class UserSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         """Create and return a user with encrypted password"""
         validated_data.pop('password_verify', None)
-        return get_user_model().objects.create_user(**validated_data)
+        user = get_user_model().objects.create_user(**validated_data)
+        Category.objects.create(user=user, name='獎助金')
+        Category.objects.create(user=user, name='薪資')
+        Category.objects.create(user=user, name='食')
+        Category.objects.create(user=user, name='衣')
+        Category.objects.create(user=user, name='住')
+        Category.objects.create(user=user, name='行')
+        Category.objects.create(user=user, name='育')
+        Category.objects.create(user=user, name='樂')
+
+        return user
 
     def update(self, instance, validated_data):
         """Update and return a user """
