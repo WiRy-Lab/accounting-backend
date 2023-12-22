@@ -49,6 +49,7 @@ INSTALLED_APPS = [
     'core',
     'account',
     'charts',
+    'dev',
 ]
 
 MIDDLEWARE = [
