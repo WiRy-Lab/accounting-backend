@@ -51,4 +51,5 @@ urlpatterns = [
     # API
     path('api/auth/', include('user.urls')),
     path('api/', include('account.urls')),
+    path('api/charts/', include('charts.urls')),
 ]

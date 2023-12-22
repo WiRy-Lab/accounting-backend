@@ -48,6 +48,7 @@ INSTALLED_APPS = [
     'user',
     'core',
     'account',
+    'charts',
 ]
 
 MIDDLEWARE = [

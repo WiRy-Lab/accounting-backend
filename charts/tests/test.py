@@ -1,0 +1,163 @@
+"""
+Test file for charts app
+"""
+from django.test import TestCase
+from django.urls import reverse
+from rest_framework import status
+from rest_framework.test import APIClient
+from django.contrib.auth import get_user_model
+from core.models import Accounting
+from datetime import datetime, timedelta
+
+def create_user(**params):
+    """Helper function to create new user"""
+    return get_user_model().objects.create_user(**params)
+
+
+class PublicChartsApiTests(TestCase):
+    """
+    Test the publically available charts API
+    """
+    def setUp(self):
+        self.client = APIClient()
+
+    def test_login_required(self):
+        """
+        Test that login is required for retrieving charts
+        """
+        res = self.client.get(reverse('charts:range_cost'))
+        self.assertEqual(res.status_code, status.HTTP_401_UNAUTHORIZED)
+
+
+class PrivateChartsApiTests(TestCase):
+    """
+    Test the authorized user charts API
+    """
+    def setUp(self):
+        """Create client and user"""
+        self.user = create_user(
+            account='apiccount',
+            password='testpass123',
+            email='apitest@example.com',
+            name='ApiTest',
+        )
+        self.client = APIClient()
+        self.client.force_authenticate(user=self.user)
+
+    def test_retrieve_charts(self):
+        """
+        Test retrieving charts
+        """
+        payload = {
+            'date': datetime.now().strftime("%Y-%m-%d"),
+            'type': 'income',
+            'amount': 10000,
+            'title': 'test title',
+            'description': 'test description',
+        }
+        Accounting.objects.create(user=self.user, **payload)
+        payload = {
+            'date': datetime.now().strftime("%Y-%m-%d"),
+            'type': 'outcome',
+            'amount': 20000,
+            'title': 'test title',
+            'description': 'test description',
+        }
+        Accounting.objects.create(user=self.user, **payload)
+        payload = {
+            'date': (datetime.now() + timedelta(days=1)).strftime("%Y-%m-%d"),
+            'type': 'income',
+            'amount': 10000,
+            'title': 'test title',
+            'description': 'test description',
+        }
+        Accounting.objects.create(user=self.user, **payload)
+        payload = {
+            'date': (datetime.now() + timedelta(days=1)).strftime("%Y-%m-%d"),
+            'type': 'outcome',
+            'amount': 20000,
+            'title': 'test title',
+            'description': 'test description',
+        }
+        Accounting.objects.create(user=self.user, **payload)
+        payload = {
+            'date': (datetime.now() + timedelta(days=5)).strftime("%Y-%m-%d"),
+            'type': 'outcome',
+            'amount': 50000,
+            'title': 'test title',
+            'description': 'test description',
+        }
+        Accounting.objects.create(user=self.user, **payload)
+        payload = {
+            'date': (datetime.now() + timedelta(days=5)).strftime("%Y-%m-%d"),
+            'type': 'outcome',
+            'amount': 30000,
+            'title': 'test title',
+            'description': 'test description',
+        }
+        Accounting.objects.create(user=self.user, **payload)
+
+
+        from_date = datetime.now().strftime('%Y-%m-%d')
+        end_date = (datetime.now() + timedelta(days=6)).strftime('%Y-%m-%d')
+        payload = {
+            'from': from_date,
+            'end': end_date,
+        }
+        res = self.client.get(reverse('charts:range_cost'), payload)
+        print(res.data)
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.assertEqual(res.data['from'], from_date)
+        self.assertEqual(res.data['end'], end_date)
+
+    def test_retrieve_charts_invalid_range(self):
+        """
+        Test retrieving charts with invalid range
+        """
+        from_date = datetime.now().strftime('%Y-%m-%d')
+        end_date = (datetime.now() + timedelta(days=0)).strftime('%Y-%m-%d')
+        payload = {
+            'from': from_date,
+            'end': end_date,
+        }
+        res = self.client.get(reverse('charts:range_cost'), payload)
+        self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_other_user_charts(self):
+        """
+        Test retrieving charts for other user
+        """
+        user2 = create_user(
+            account='apiccount2',
+            password='testpass123',
+        )
+        payload = {
+            'date': datetime.now().strftime("%Y-%m-%d"),
+            'type': 'income',
+            'amount': 10000,
+            'title': 'test title',
+            'description': 'test description',
+        }
+        Accounting.objects.create(user=user2, **payload)
+        payload = {
+            'date': datetime.now().strftime("%Y-%m-%d"),
+            'type': 'outcome',
+            'amount': 20000,
+            'title': 'test title',
+            'description': 'test description',
+        }
+        Accounting.objects.create(user=user2, **payload)
+
+        from_date = datetime.now().strftime('%Y-%m-%d')
+        end_date = (datetime.now() + timedelta(days=1)).strftime('%Y-%m-%d')
+        payload = {
+            'from': from_date,
+            'end': end_date,
+        }
+        res = self.client.get(reverse('charts:range_cost'), payload)
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.assertEqual(res.data['from'], from_date)
+        self.assertEqual(res.data['end'], end_date)
+        self.assertEqual(res.data['income'], [0, 0])
+        self.assertEqual(res.data['outcome'], [0, 0])
+

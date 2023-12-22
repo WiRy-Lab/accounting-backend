@@ -35,11 +35,14 @@ class AccountingViewSet(viewsets.ModelViewSet):
         """Retrieve the accounting for the authenticated user"""
         categories = self.request.query_params.get('category')
         queryset = self.queryset
-        if categories:
-            category_ids = self._params_to_ints(categories)
-            queryset = queryset.filter(category__id__in=category_ids)
+        if self.request.user.is_authenticated:
+            if categories:
+                category_ids = self._params_to_ints(categories)
+                queryset = queryset.filter(category__id__in=category_ids)
 
-        return queryset.filter(user=self.request.user).order_by('-date')
+            return queryset.filter(user=self.request.user).order_by('-date')
+        else:
+            return queryset.none()
 
     def get_serializer_class(self):
         """Return the serializer class for the request"""
