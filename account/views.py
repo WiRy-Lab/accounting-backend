@@ -8,10 +8,11 @@ from datetime import datetime , timedelta
 
 from django.utils.timezone import make_aware
 
-from rest_framework import viewsets, mixins
+from rest_framework import viewsets, mixins , status
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
+
 
 from core.models import Accounting, Category
 from account import serializers
@@ -164,3 +165,13 @@ class CategoryViewSet(mixins.CreateModelMixin,
     def perform_create(self, serializer):
         """Create a new category"""
         serializer.save(user=self.request.user)
+
+    def retrieve(self, request, *args, **pk):
+        """Retrieve a specific category by ID"""
+        try:
+            category = self.get_object()
+        except Category.DoesNotExist:
+            return Response({'message': 'Category not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = self.get_serializer(category)
+        return Response(serializer.data)
