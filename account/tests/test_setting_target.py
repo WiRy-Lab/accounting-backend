@@ -1,5 +1,5 @@
 """
-Test setting target
+Test settings target
 """
 from django.urls import reverse
 from django.test import TestCase
@@ -22,14 +22,14 @@ def create_user(account='testaccount', password='testpass123'):
     return get_user_model().objects.create_user(account, password)
 
 
-class PublicSettingTargetApiTests(TestCase):
-    """Test the publicly available setting target API"""
+class PublicSettingsTargetApiTests(TestCase):
+    """Test the publicly available settings target API"""
 
     def setUp(self):
         self.client = APIClient()
 
     def test_login_required(self):
-        """Test that login is required for retrieving setting target"""
+        """Test that login is required for retrieving settings target"""
         res = self.client.get(MONTH_TARGET_URL)
 
         self.assertEqual(res.status_code, status.HTTP_401_UNAUTHORIZED)
@@ -39,8 +39,8 @@ class PublicSettingTargetApiTests(TestCase):
         self.assertEqual(res.status_code, status.HTTP_401_UNAUTHORIZED)
 
 
-class PrivateSettingTargetApiTests(TestCase):
-    """Test the authorized user setting target API"""
+class PrivateSettingsTargetApiTests(TestCase):
+    """Test the authorized user settings target API"""
 
     def setUp(self):
         self.user = create_user()
