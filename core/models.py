@@ -81,3 +81,20 @@ class Category(models.Model):
 
     def __str__(self) -> str:
         return self.name
+
+class MonthTarget(models.Model):
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+    )
+    year = models.IntegerField()
+    month = models.IntegerField()
+    income = models.IntegerField()
+    outcome = models.IntegerField()
+
+class SaveMoneyTarget(models.Model):
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+    )
+    target = models.IntegerField()

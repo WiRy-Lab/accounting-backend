@@ -3,7 +3,7 @@ Serializers for accounting api
 """
 from rest_framework import serializers
 
-from core.models import Accounting, Category
+from core.models import Accounting, Category, MonthTarget, SaveMoneyTarget
 
 
 class CategorySerializer(serializers.ModelSerializer):
@@ -52,13 +52,24 @@ class AccountingSerializer(serializers.ModelSerializer):
         return instance
 
 
-
-
 class AccountingDetailSerializer(AccountingSerializer):
     """Serialize a accounting detail"""
 
     class Meta(AccountingSerializer.Meta):
         fields = AccountingSerializer.Meta.fields + ('description',)
+        read_only_fields = ('id',)
+
+
+class MonthTargetSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = MonthTarget
+        fields = ['id', 'year', 'month', 'income', 'outcome']
+        read_only_fields = ('id',)
+
+class SaveMoneyTargetSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = SaveMoneyTarget
+        fields = ['id', 'target']
         read_only_fields = ('id',)
 
 

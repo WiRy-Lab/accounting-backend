@@ -14,7 +14,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 
-from core.models import Accounting, Category
+from core.models import Accounting, Category , MonthTarget , SaveMoneyTarget
 from account import serializers
 
 from drf_yasg.utils import swagger_auto_schema
@@ -175,3 +175,40 @@ class CategoryViewSet(mixins.CreateModelMixin,
 
         serializer = self.get_serializer(category)
         return Response(serializer.data)
+
+
+class MonthTargetViewSet(viewsets.ModelViewSet):
+    serializer_class = serializers.MonthTargetSerializer
+    permission_classes = [IsAuthenticated]
+    authentication_classes = (TokenAuthentication,)
+    queryset = MonthTarget.objects.all()
+
+    def get_queryset(self):
+        queryset = self.queryset
+        return queryset.filter(user=self.request.user).order_by('-year', '-month')
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
+
+    def retrieve(self, request, year, month):
+        try:
+            month_target = self.get_queryset().get(year=year, month=month)
+        except MonthTarget.DoesNotExist:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+
+        serializer = self.get_serializer(month_target)
+        return Response(serializer.data)
+
+class SaveMoneyTargetViewSet(viewsets.ModelViewSet):
+    serializer_class = serializers.SaveMoneyTargetSerializer
+    permission_classes = [IsAuthenticated]
+    authentication_classes = (TokenAuthentication,)
+    queryset = SaveMoneyTarget.objects.all()
+
+    def get_queryset(self):
+        queryset = self.queryset
+        return queryset.filter(user=self.request.user)
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
+

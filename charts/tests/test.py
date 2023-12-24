@@ -105,7 +105,6 @@ class PrivateChartsApiTests(TestCase):
             'end': end_date,
         }
         res = self.client.get(reverse('charts:range_cost'), payload)
-        print(res.data)
         self.assertEqual(res.status_code, status.HTTP_200_OK)
         self.assertEqual(res.data['from'], from_date)
         self.assertEqual(res.data['end'], end_date)
