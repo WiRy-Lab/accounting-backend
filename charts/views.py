@@ -199,3 +199,4 @@ class TypeCostAPIView(APIView):
             "end": end_date.strftime('%Y-%m-%d'),
             "data": data
         })
+

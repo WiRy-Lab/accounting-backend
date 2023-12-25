@@ -188,7 +188,19 @@ class MonthTargetViewSet(viewsets.ModelViewSet):
         return queryset.filter(user=self.request.user).order_by('-year', '-month')
 
     def perform_create(self, serializer):
-        serializer.save(user=self.request.user)
+        user = self.request.user
+        year = serializer.validated_data.get('year')
+        month = serializer.validated_data.get('month')
+
+        month_target, created = MonthTarget.objects.get_or_create(
+            user=user, year=year, month=month,
+            defaults=serializer.validated_data
+        )
+
+        if not created:
+            for key, value in serializer.validated_data.items():
+                setattr(month_target, key, value)
+            month_target.save()
 
     def retrieve(self, request, year, month):
         try:
