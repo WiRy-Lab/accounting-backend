@@ -200,3 +200,75 @@ class TypeCostAPIView(APIView):
             "data": data
         })
 
+
+class CompareAPIView(APIView):
+    authentication_classes = (TokenAuthentication,)
+    permission_classes = (IsAuthenticated,)
+
+    @swagger_auto_schema(
+        description="Compare accounting data between two periods",
+        manual_parameters=[
+            openapi.Parameter(
+                name='from',
+                in_=openapi.IN_QUERY,
+                type=openapi.TYPE_STRING,
+                description='Start date for current period',
+                required=True
+            ),
+            openapi.Parameter(
+                name='end',
+                in_=openapi.IN_QUERY,
+                type=openapi.TYPE_STRING,
+                description='End date for current period',
+                required=True
+            )
+        ],
+    )
+    def get(self, request):
+        from_date = request.query_params.get('from')
+        end_date = request.query_params.get('end')
+
+        try:
+            from_date = make_aware(datetime.strptime(from_date, '%Y-%m-%d'))
+            end_date = make_aware(datetime.strptime(end_date, '%Y-%m-%d'))
+        except (ValueError, TypeError):
+            return Response({"error": "Invalid date format"}, status=status.HTTP_400_BAD_REQUEST)
+
+        duration = end_date - from_date
+
+        prev_end_date = from_date - timedelta(days=1)
+        prev_start_date = prev_end_date - duration
+
+        current_data = self.aggregate_data(request.user, from_date, end_date)
+
+        prev_data = self.aggregate_data(request.user, prev_start_date, prev_end_date)
+
+        income_diff = current_data['income'] - prev_data['income']
+        outcome_diff = current_data['outcome'] - prev_data['outcome']
+
+        income_percentage_change = self.calculate_percentage_change(prev_data['income'], current_data['income'])
+        outcome_percentage_change = self.calculate_percentage_change(prev_data['outcome'], current_data['outcome'])
+
+        response_data = {
+            "from": from_date.strftime('%Y-%m-%d'),
+            "end": end_date.strftime('%Y-%m-%d'),
+            'prev_from': prev_start_date.strftime('%Y-%m-%d'),
+            'prev_end': prev_end_date.strftime('%Y-%m-%d'),
+            'income_change': income_percentage_change,
+            'outcome_change': outcome_percentage_change,
+        }
+
+        return Response(response_data)
+
+    def aggregate_data(self, user, start_date, end_date):
+        queryset = Accounting.objects.filter(user=user, date__range=[start_date, end_date])
+        total_income = queryset.filter(type='income').aggregate(Sum('amount'))['amount__sum'] or 0
+        total_outcome = queryset.filter(type='outcome').aggregate(Sum('amount'))['amount__sum'] or 0
+
+        return {"income": total_income, "outcome": total_outcome}
+
+    def calculate_percentage_change(self, old_value, new_value):
+        if old_value == 0:
+            return -101.0
+        return round(((new_value - old_value) / old_value) * 100, 2)
+

@@ -257,5 +257,3 @@ class PrivateChartsApiTests(TestCase):
         self.assertEqual(res.data['data'][0]['name'], '住')
         self.assertEqual(res.data['data'][0]['percent'], '57%')
         self.assertEqual(res.data['data'][0]['data'], [57, 43])
-
-
