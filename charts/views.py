@@ -115,8 +115,8 @@ class TargetAPIView(APIView):
             "month": month,
             "target_income": target_income,
             "target_outcome": target_outcome,
-            "income": [income_achieved, target_income - income_achieved],
-            "outcome": [outcome_achieved, target_outcome - outcome_achieved]
+            "income": [income_achieved, target_income - income_achieved if target_income - income_achieved > 0 else 0],
+            "outcome": [outcome_achieved, target_outcome - outcome_achieved if target_outcome - outcome_achieved > 0 else 0]
         }
 
         return Response(response_data)
