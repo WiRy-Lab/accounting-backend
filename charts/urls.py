@@ -12,4 +12,5 @@ urlpatterns = [
     path('target/<int:year>/<int:month>', views.TargetAPIView.as_view(), name='target'),
     path('type_cost', views.TypeCostAPIView.as_view(), name='type_cost'),
     path('compare_cost', views.CompareAPIView.as_view(), name='compare_cost'),
+    path('save_target/<int:category_id>', views.SaveMoneyAPIView.as_view(), name='save_target'),
 ]

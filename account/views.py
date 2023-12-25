@@ -215,12 +215,23 @@ class SaveMoneyTargetViewSet(viewsets.ModelViewSet):
     serializer_class = serializers.SaveMoneyTargetSerializer
     permission_classes = [IsAuthenticated]
     authentication_classes = (TokenAuthentication,)
-    queryset = SaveMoneyTarget.objects.all()
 
     def get_queryset(self):
-        queryset = self.queryset
-        return queryset.filter(user=self.request.user)
+        """Retrieve the save money targets for the authenticated user"""
+        return SaveMoneyTarget.objects.filter(user=self.request.user)
 
     def perform_create(self, serializer):
-        serializer.save(user=self.request.user)
+        """Create a new save money target or update existing one"""
+        user = self.request.user
+        category_id = serializer.validated_data.get('category').id
 
+        existing_target = SaveMoneyTarget.objects.filter(
+            user=user, category_id=category_id
+        ).first()
+
+        if existing_target:
+            for key, value in serializer.validated_data.items():
+                setattr(existing_target, key, value)
+            existing_target.save()
+        else:
+            serializer.save(user=user)

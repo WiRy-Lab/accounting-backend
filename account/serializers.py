@@ -67,9 +67,13 @@ class MonthTargetSerializer(serializers.ModelSerializer):
         read_only_fields = ('id',)
 
 class SaveMoneyTargetSerializer(serializers.ModelSerializer):
+    category = serializers.PrimaryKeyRelatedField(
+        queryset=Category.objects.all()
+    )
+
     class Meta:
         model = SaveMoneyTarget
-        fields = ['id', 'target']
+        fields = ['id', 'category', 'target']
         read_only_fields = ('id',)
 
 

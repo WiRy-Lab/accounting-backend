@@ -97,4 +97,8 @@ class SaveMoneyTarget(models.Model):
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
     )
+    category = models.ForeignKey(
+        'Category',
+        on_delete=models.CASCADE,
+    )
     target = models.IntegerField()

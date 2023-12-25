@@ -8,7 +8,7 @@ from rest_framework import status
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.permissions import IsAuthenticated
 
-from core.models import Accounting, MonthTarget, SaveMoneyTarget
+from core.models import Accounting, MonthTarget, SaveMoneyTarget , Category
 
 from datetime import datetime, timedelta
 
@@ -271,4 +271,65 @@ class CompareAPIView(APIView):
         if old_value == 0:
             return -101.0
         return round(((new_value - old_value) / old_value) * 100, 2)
+
+
+class SaveMoneyAPIView(APIView):
+    authentication_classes = (TokenAuthentication,)
+    permission_classes = (IsAuthenticated,)
+
+    @swagger_auto_schema(
+        description="Get saving target for a category",
+        manual_parameters=[
+            openapi.Parameter(
+                name='category_id',
+                in_=openapi.IN_PATH,
+                type=openapi.TYPE_INTEGER,
+                description='Category ID',
+                required=True
+            )
+        ],
+        responses={
+            status.HTTP_200_OK: openapi.Response(
+                description="Saving target for a category",
+                schema=openapi.Schema(
+                    type=openapi.TYPE_OBJECT,
+                    properties={
+                        'category_id': openapi.Schema(type=openapi.TYPE_INTEGER),
+                        'target_amount': openapi.Schema(type=openapi.TYPE_INTEGER),
+                        'current_amount': openapi.Schema(type=openapi.TYPE_INTEGER),
+                        'progress': openapi.Schema(type=openapi.TYPE_INTEGER),
+                    }
+                )
+            ),
+            status.HTTP_404_NOT_FOUND: "Saving target not set for this category",
+            status.HTTP_400_BAD_REQUEST: "Bad request",
+        }
+    )
+    def get(self, request, category_id):
+        try:
+            category = Category.objects.get(id=category_id, user=request.user)
+            target = SaveMoneyTarget.objects.get(user=request.user, category=category)
+
+            total_income = Accounting.objects.filter(
+                user=request.user,
+                type='income',
+                category=category
+            ).aggregate(total=Sum('amount'))['total'] or 0
+
+            progress = (total_income / target.target) * 100 if target.target else 0
+            progress = min(progress, 100)
+
+            return Response({
+                'category_id': category_id,
+                'target_amount': target.target,
+                'current_amount': total_income,
+                'progress': round(progress,2),
+            })
+
+        except Category.DoesNotExist:
+            return Response({"error": "Category not found"}, status=status.HTTP_404_NOT_FOUND)
+        except SaveMoneyTarget.DoesNotExist:
+            return Response({"error": "Saving target not set for this category"}, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
