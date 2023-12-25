@@ -50,6 +50,7 @@ INSTALLED_APPS = [
     'account',
     'charts',
     'dev',
+    'reports',
 ]
 
 MIDDLEWARE = [
@@ -168,3 +169,6 @@ SWAGGER_SETTINGS = {
         }
     }
 }
+
+AWS_STORAGE_BUCKET_NAME = 'accounting-reports-wiry'
+AWS_S3_REGION_NAME = 'us-east-1'
