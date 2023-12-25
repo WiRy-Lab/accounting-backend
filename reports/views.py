@@ -84,7 +84,7 @@ class MonthlyReportAPIView(APIView):
         print(file_url)
 
         return Response({
-            "檔名": filename,
+            "filename": filename,
             "url": file_url
         })
 
@@ -105,6 +105,6 @@ class YearlyReportAPIView(APIView):
         file_url = store_csv_file(request.user.account, filename, csv_content)
 
         return Response({
-            "檔名": filename,
+            "filename": filename,
             "url": file_url
         })
