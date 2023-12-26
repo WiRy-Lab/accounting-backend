@@ -2,7 +2,7 @@
 Test for reports
 """
 
-'''
+
 from django.test import TestCase
 from django.urls import reverse
 from django.contrib.auth import get_user_model
@@ -20,7 +20,7 @@ def create_user(account='testaccount', password='testpass123', name='testuser'):
     """Helper function to create a user"""
     return get_user_model().objects.create_user(account, password, name=name)
 
-
+'''
 class PublicReportsApiTests(TestCase):
     """Test the publicly available reports API"""
 
@@ -83,4 +83,39 @@ class PrivateReportsApiTests(TestCase):
 
         self.assertEqual(res.status_code, status.HTTP_200_OK)
         self.assertEqual(len(res.data), 2)
+
+
+class PrivateReportsApiTests(TestCase):
+    def setUp(self):
+        self.client = APIClient()
+        self.user = create_user()
+        self.client.force_authenticate(self.user)
+
+    def test_analysis(self):
+        """Test retrieving a list of reports"""
+        category = Category.objects.create(
+            user=self.user,
+            name='test category',
+        )
+        Accounting.objects.create(
+            user=self.user,
+            date=datetime.now(),
+            type='income',
+            amount=100,
+            title='test title',
+        )
+        Accounting.objects.create(
+            user=self.user,
+            date=datetime.now(),
+            type='outcome',
+            amount=200,
+            title='test title',
+        )
+
+        res = self.client.get(reverse('reports:get_monthly_analysis', args=[datetime.now().year, datetime.now().month]))
+
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(res.data), 1)
+        self.assertEqual(res.data[0]['category'], category.name)
+        self.assertEqual(res.data[0]['amount'], 100)
 '''
