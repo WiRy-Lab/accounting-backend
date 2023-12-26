@@ -286,7 +286,21 @@ class SaveMoneyAPIView(APIView):
                 type=openapi.TYPE_INTEGER,
                 description='Category ID',
                 required=True
-            )
+            ),
+            openapi.Parameter(
+                name='from',
+                in_=openapi.IN_QUERY,
+                type=openapi.TYPE_STRING,
+                description='Start date for the range (format: YYYY-MM-DD)',
+                required=False
+            ),
+            openapi.Parameter(
+                name='end',
+                in_=openapi.IN_QUERY,
+                type=openapi.TYPE_STRING,
+                description='End date for the range (format: YYYY-MM-DD)',
+                required=False
+            ),
         ],
         responses={
             status.HTTP_200_OK: openapi.Response(
@@ -306,15 +320,27 @@ class SaveMoneyAPIView(APIView):
         }
     )
     def get(self, request, category_id):
+        from_date_str = request.query_params.get('from')
+        end_date_str = request.query_params.get('end')
+
         try:
+            from_date = make_aware(datetime.strptime(from_date_str, '%Y-%m-%d')) if from_date_str else None
+            end_date = make_aware(datetime.strptime(end_date_str, '%Y-%m-%d')) if end_date_str else None
+
             category = Category.objects.get(id=category_id, user=request.user)
             target = SaveMoneyTarget.objects.get(user=request.user, category=category)
 
-            total_income = Accounting.objects.filter(
-                user=request.user,
-                type='income',
-                category=category
-            ).aggregate(total=Sum('amount'))['total'] or 0
+            income_filter_args = {
+                'user': request.user,
+                'type': 'income',
+                'category': category
+            }
+            if from_date:
+                income_filter_args['date__gte'] = from_date
+            if end_date:
+                income_filter_args['date__lte'] = end_date
+
+            total_income = Accounting.objects.filter(**income_filter_args).aggregate(total=Sum('amount'))['total'] or 0
 
             progress = (total_income / target.target) * 100 if target.target else 0
             progress = min(progress, 100)
@@ -323,13 +349,15 @@ class SaveMoneyAPIView(APIView):
                 'category_id': category_id,
                 'target_amount': target.target,
                 'current_amount': total_income,
-                'progress': round(progress,2),
+                'progress': round(progress, 2),
             })
 
         except Category.DoesNotExist:
             return Response({"error": "Category not found"}, status=status.HTTP_404_NOT_FOUND)
         except SaveMoneyTarget.DoesNotExist:
             return Response({"error": "Saving target not set for this category"}, status=status.HTTP_404_NOT_FOUND)
+        except ValueError:
+            return Response({"error": "Invalid date format"}, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 

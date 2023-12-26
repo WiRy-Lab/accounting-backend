@@ -171,7 +171,7 @@ class PrivateChartsApiTests(TestCase):
         }
         Accounting.objects.create(user=self.user, **payload)
         payload = {
-            'date': (datetime.now() + timedelta(days=1)).strftime("%Y-%m-%d"),
+            'date': (datetime.now()).strftime("%Y-%m-%d"),
             'type': 'outcome',
             'amount': 20000,
             'title': 'test title',
@@ -179,7 +179,7 @@ class PrivateChartsApiTests(TestCase):
         }
         Accounting.objects.create(user=self.user, **payload)
         payload = {
-            'date': (datetime.now() + timedelta(days=5)).strftime("%Y-%m-%d"),
+            'date': datetime.now().strftime("%Y-%m-%d"),
             'type': 'income',
             'amount': 50000,
             'title': 'test title',
