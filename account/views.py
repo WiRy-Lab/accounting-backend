@@ -12,7 +12,7 @@ from rest_framework import viewsets, mixins , status
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
-
+from rest_framework.decorators import api_view
 
 from core.models import Accounting, Category , MonthTarget , SaveMoneyTarget
 from account import serializers
@@ -202,14 +202,19 @@ class MonthTargetViewSet(viewsets.ModelViewSet):
                 setattr(month_target, key, value)
             month_target.save()
 
-    def retrieve(self, request, year, month):
-        try:
-            month_target = self.get_queryset().get(year=year, month=month)
-        except MonthTarget.DoesNotExist:
-            return Response(status=status.HTTP_404_NOT_FOUND)
+@api_view(['GET'])
+def retrieve_month_target_by_year_month(request, year, month):
+    """Retrieve a specific month target by year and month"""
+    try:
+        month_target = MonthTarget.objects.filter(user=request.user, year=year, month=month).first()
+        if not month_target:
+            raise MonthTarget.DoesNotExist
 
-        serializer = self.get_serializer(month_target)
+        serializer = serializers.MonthTargetSerializer(month_target)
         return Response(serializer.data)
+
+    except MonthTarget.DoesNotExist:
+        return Response({"error": "Month target not found"}, status=status.HTTP_404_NOT_FOUND)
 
 class SaveMoneyTargetViewSet(viewsets.ModelViewSet):
     serializer_class = serializers.SaveMoneyTargetSerializer
@@ -235,3 +240,18 @@ class SaveMoneyTargetViewSet(viewsets.ModelViewSet):
             existing_target.save()
         else:
             serializer.save(user=user)
+
+@api_view(['GET'])
+def retrieve_save_money_target_by_category(request, category_id):
+    """Retrieve a specific save money target by category ID"""
+    try:
+        save_money_target = SaveMoneyTarget.objects.filter(user=request.user, category__id=category_id).first()
+        if not save_money_target:
+            raise SaveMoneyTarget.DoesNotExist
+
+        serializer = serializers.SaveMoneyTargetSerializer(save_money_target)
+        return Response(serializer.data)
+
+    except SaveMoneyTarget.DoesNotExist:
+        return Response({"error": "Save money target not found"}, status=status.HTTP_404_NOT_FOUND)
+

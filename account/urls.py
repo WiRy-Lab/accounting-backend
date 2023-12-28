@@ -19,5 +19,6 @@ app_name = 'accounting'
 
 urlpatterns = [
     path('', include(router.urls)),
-    path('settings/month_target/<int:year>/<int:month>', views.MonthTargetViewSet.as_view({'get': 'retrieve'}), name='month-target-detail'),
+    path('settings/month_target/<int:year>/<int:month>', views.retrieve_month_target_by_year_month, name='month-target-by-year-month'),
+    path('settings/save_money_target/category/<int:category_id>', views.retrieve_save_money_target_by_category, name='save-money-target-by-category'),
 ]
