@@ -313,6 +313,8 @@ class SaveMoneyAPIView(APIView):
                     type=openapi.TYPE_OBJECT,
                     properties={
                         'category_id': openapi.Schema(type=openapi.TYPE_INTEGER),
+                        'from_date': openapi.Schema(type=openapi.TYPE_STRING),
+                        'end_date': openapi.Schema(type=openapi.TYPE_STRING),
                         'target_amount': openapi.Schema(type=openapi.TYPE_INTEGER),
                         'current_amount': openapi.Schema(type=openapi.TYPE_INTEGER),
                         'progress': openapi.Schema(type=openapi.TYPE_INTEGER),
