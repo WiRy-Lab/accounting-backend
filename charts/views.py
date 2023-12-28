@@ -1,4 +1,4 @@
-from django.db.models import Sum, Case, When, IntegerField
+from django.db.models import Sum, Case, When, IntegerField, Prefetch
 from django.db.models.functions import TruncDay
 from django.utils.timezone import make_aware
 
@@ -169,30 +169,48 @@ class TypeCostAPIView(APIView):
         except (ValueError, TypeError):
             return Response({"error": "Invalid date format"}, status=status.HTTP_400_BAD_REQUEST)
 
-        queryset = Accounting.objects.filter(user=request.user, date__range=[from_date, end_date], type='outcome')
+        prefetch = Prefetch('category', queryset=Category.objects.all().annotate(total=Sum('accounting__amount')))
+        queryset = Accounting.objects.filter(user=request.user, date__range=[from_date, end_date], type='outcome').prefetch_related(prefetch)
 
-        total_outcome_amount = queryset.aggregate(total=Sum('amount'))['total'] or 0
+        category_totals = {}
+        for accounting in queryset:
+            for category in accounting.category.all():
+                category_totals[category.name] = category_totals.get(category.name, 0) + accounting.amount
 
-        category_outcomes = queryset.values('category__name').annotate(total=Sum('amount')).order_by('-total')
+        total_outcome_amount = sum(category_totals.values())
 
         data = []
         total_percent = 0
-        for category in category_outcomes:
-            category_name = category['category__name']
-            category_total = category['total']
-            percent = int(round(((category_total / total_outcome_amount) * 100), 0)) if total_outcome_amount else 0
+        for name, total in sorted(category_totals.items(), key=lambda item: item[1], reverse=True):
+            percent = round((total / total_outcome_amount * 100), 0) if total_outcome_amount else 0
+            percent = int(percent)
             data.append({
-                "name": category_name,
+                "name": name,
                 "percent": f"{percent}%",
                 "data": [percent, 100 - percent]
             })
             total_percent += percent
 
-        if data and total_percent != 100:
-            last_percent = data[-1]["data"][0] + (100 - total_percent)
-            data[-1]["data"][0] = last_percent
-            data[-1]["percent"] = f"{last_percent}%"
-            data[-1]["data"][1] = 100 - last_percent
+        data_sorted = sorted(data, key=lambda x: x['data'][0], reverse=True)
+
+        total_percent = sum(item['data'][0] for item in data_sorted)
+        adjustment = 100 - total_percent
+
+        for item in data_sorted:
+            if adjustment == 0:
+                break
+            if adjustment > 0 and item['data'][0] > 0:
+                increment = min(adjustment, 1)
+                item['data'][0] += increment
+                item['percent'] = f"{item['data'][0]}%"
+                adjustment -= increment
+            elif adjustment < 0 and item['data'][0] < 100:
+                decrement = max(adjustment, -1)
+                item['data'][0] += decrement
+                item['percent'] = f"{item['data'][0]}%"
+                adjustment -= decrement
+
+        assert sum(item['data'][0] for item in data_sorted) == 100
 
         return Response({
             "from": from_date.strftime('%Y-%m-%d'),
