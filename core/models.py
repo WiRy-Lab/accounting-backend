@@ -102,3 +102,5 @@ class SaveMoneyTarget(models.Model):
         on_delete=models.CASCADE,
     )
     target = models.IntegerField()
+    from_date = models.DateField(null=False)
+    end_date = models.DateField(null=False)

@@ -63,7 +63,7 @@ class PrivateSettingsTargetApiTests(TestCase):
     def test_retrieve_save_money_target(self):
         """Test retrieving a list of save money target"""
         category = Category.objects.create(user=self.user, name='test category')
-        SaveMoneyTarget.objects.create(user=self.user, target=1000000, category=category)
+        SaveMoneyTarget.objects.create(user=self.user, target=1000000, category=category, from_date=datetime.now().date(), end_date=datetime.now().date()) 
 
         res = self.client.get(SAVE_MONEY_TARGET_URL)
 
@@ -94,7 +94,7 @@ class PrivateSettingsTargetApiTests(TestCase):
     def test_create_save_money_target(self):
         """Test creating a new save money target"""
         category = Category.objects.create(user=self.user, name='test category')
-        payload = {'target': 1000000, 'category': category.id}
+        payload = {'target': 1000000, 'category': category.id, 'from_date': datetime.now().date(), 'end_date': datetime.now().date()}
 
         res = self.client.post(SAVE_MONEY_TARGET_URL, payload)
 
@@ -140,7 +140,7 @@ class PrivateSettingsTargetApiTests(TestCase):
     def test_partial_update_save_money_target(self):
         """Test updating a save money target with patch"""
         category = Category.objects.create(user=self.user, name='test category')
-        save_money_target = SaveMoneyTarget.objects.create(user=self.user, target=1000000, category=category)
+        save_money_target = SaveMoneyTarget.objects.create(user=self.user, target=1000000, category=category, from_date=datetime.now().date(), end_date=datetime.now().date())
         payload = {'target': 2000000}
 
         url = reverse('accounting:save_money_target-detail', args=[save_money_target.id])
@@ -168,9 +168,9 @@ class PrivateSettingsTargetApiTests(TestCase):
     def test_full_update_save_money_target(self):
         """Test updating a save money target with put"""
         category = Category.objects.create(user=self.user, name='test category')
-        save_money_target = SaveMoneyTarget.objects.create(user=self.user, target=1000000, category=category)
+        save_money_target = SaveMoneyTarget.objects.create(user=self.user, target=1000000, category=category, from_date=datetime.now().date(), end_date=datetime.now().date())
         new_category = Category.objects.create(user=self.user, name='new category')
-        payload = {'target': 2000000, 'category': new_category.id}
+        payload = {'target': 2000000, 'category': new_category.id, 'from_date': datetime.now().date(), 'end_date': datetime.now().date()}
 
         url = reverse('accounting:save_money_target-detail', args=[save_money_target.id])
         res = self.client.put(url, payload)
@@ -193,7 +193,7 @@ class PrivateSettingsTargetApiTests(TestCase):
     def test_delete_save_money_target(self):
         """Test deleting a save money target"""
         category = Category.objects.create(user=self.user, name='test category')
-        save_money_target = SaveMoneyTarget.objects.create(user=self.user, target=1000000, category=category)
+        save_money_target = SaveMoneyTarget.objects.create(user=self.user, target=1000000, category=category, from_date=datetime.now().date(), end_date=datetime.now().date())
 
         url = reverse('accounting:save_money_target-detail', args=[save_money_target.id])
         res = self.client.delete(url)
@@ -227,7 +227,7 @@ class PrivateSettingsTargetApiTests(TestCase):
         """Test deleting a save money target not owned"""
         user2 = create_user(account='testaccount2', password='testpass')
         category = Category.objects.create(user=user2, name='test category')
-        save_money_target = SaveMoneyTarget.objects.create(user=user2, target=1000000, category=category)
+        save_money_target = SaveMoneyTarget.objects.create(user=user2, target=1000000, category=category, from_date=datetime.now().date(), end_date=datetime.now().date())
 
         url = reverse('accounting:save_money_target-detail', args=[save_money_target.id])
         res = self.client.delete(url)
@@ -248,7 +248,8 @@ class PrivateSettingsTargetApiTests(TestCase):
         """Test updating a save money target not owned"""
         user2 = create_user(account='testaccount2', password='testpass')
         category = Category.objects.create(user=user2, name='test category')
-        save_money_target = SaveMoneyTarget.objects.create(user=user2, target=1000000, category=category)
+        save_money_target = SaveMoneyTarget.objects.create(user=user2, target=1000000, category=category, from_date=datetime.now().date(), end_date=datetime.now().date())
+
         new_category = Category.objects.create(user=user2, name='new category')
         payload = {'target': 2000000, 'category': new_category.id}
 

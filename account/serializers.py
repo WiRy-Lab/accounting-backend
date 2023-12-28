@@ -73,7 +73,7 @@ class SaveMoneyTargetSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = SaveMoneyTarget
-        fields = ['id', 'category', 'target']
+        fields = ['id', 'category', 'target', 'from_date', 'end_date']
         read_only_fields = ('id',)
 
 
