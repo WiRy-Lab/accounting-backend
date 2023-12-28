@@ -344,6 +344,8 @@ class SaveMoneyAPIView(APIView):
 
             return Response({
                 'category_id': category_id,
+                'from_date': from_date.strftime('%Y-%m-%d'),
+                'end_date': end_date.strftime('%Y-%m-%d'),
                 'target_amount': target.target,
                 'current_amount': total_income,
                 'progress': round(progress, 2),
